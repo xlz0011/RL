@@ -84,7 +84,7 @@ class SarsaLambdaTable(RL):
 
         # Method 2:
         self.eligibility_trace.loc[s, :] *= 0      #归一化
-        self.eligibility_trace.loc[s, a] = 1
+        self.eligibility_trace.loc[s, a] = 1   #对于经历过的 state-action, 让他+1, 证明他是得到 reward 路途中不可或缺的一环
 
         # Q update
         self.q_table += self.lr * error * self.eligibility_trace
