@@ -27,6 +27,7 @@ tf.set_random_seed(1)
 
 # Deep Q Network off-policy
 class DeepQNetwork:
+    #DQN结构与之前的方法不同，重新定义一个class
     def __init__(
             self,
             n_actions,
@@ -75,6 +76,7 @@ class DeepQNetwork:
 
     def _build_net(self):
         # ------------------ build evaluate_net ------------------
+        #eval net 是不断被更新的，是被训练的网络。
         #输入为state;q_target
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # input
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')  # for calculating loss
@@ -85,23 +87,26 @@ class DeepQNetwork:
                 tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
             #两层神经网络
             # first layer. collections is used later when assign to target net
+           
             with tf.variable_scope('l1'):
                 w1 = tf.get_variable('w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names)
                 b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names)
                 l1 = tf.nn.relu(tf.matmul(self.s, w1) + b1)
 
             # second layer. collections is used later when assign to target net
+            
             with tf.variable_scope('l2'):
                 w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
                 b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
                 self.q_eval = tf.matmul(l1, w2) + b2
 
-        with tf.variable_scope('loss'):
+        with tf.variable_scope('loss'):  #求误差
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
-        with tf.variable_scope('train'):
+        with tf.variable_scope('train'):  #梯度下降
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
-        # ------------------ build target_net ------------------
+        # ------------------ build target_net, 提供target Q ------------------ 
+        #target net是eval net的历史版本，拥有eval net很久之前的一组参数，这组参数被固定一段时间，然后被eval net新参数替换
         self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')    # input
         with tf.variable_scope('target_net'):
             # c_names(collections_names) are the collections to store variables
